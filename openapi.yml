@@ -1,0 +1,637 @@
+openapi: 3.0.3
+info:
+  title: OpenAI API Mock Server
+  description: Mock server compatible with OpenAI API
+  version: 1.0.0
+servers:
+  - url: /v1
+paths:
+  /models:
+    get:
+      operationId: listModels
+      summary: List models
+      description: Lists the currently available models.
+      tags:
+        - Models
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListModelsResponse'
+  /models/{model}:
+    get:
+      operationId: retrieveModel
+      summary: Retrieve a model
+      description: Retrieves a model instance.
+      tags:
+        - Models
+      parameters:
+        - name: model
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The ID of the model to use for this request.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Model'
+  /chat/completions:
+    post:
+      operationId: createChatCompletion
+      summary: Create chat completion
+      description: Creates a model response for the given chat conversation.
+      tags:
+        - Chat
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateChatCompletionRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateChatCompletionResponse'
+  /completions:
+    post:
+      operationId: createCompletion
+      summary: Create completion
+      description: Creates a completion for the provided prompt and parameters.
+      tags:
+        - Completions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCompletionRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateCompletionResponse'
+  /embeddings:
+    post:
+      operationId: createEmbedding
+      summary: Create embeddings
+      description: Creates an embedding vector representing the input text.
+      tags:
+        - Embeddings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateEmbeddingRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateEmbeddingResponse'
+components:
+  schemas:
+    ListModelsResponse:
+      type: object
+      required:
+        - object
+        - data
+      properties:
+        object:
+          type: string
+          enum: [list]
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Model'
+    Model:
+      type: object
+      required:
+        - id
+        - object
+        - created
+        - owned_by
+      properties:
+        id:
+          type: string
+          description: The model identifier.
+        object:
+          type: string
+          enum: [model]
+        created:
+          type: integer
+          format: int64
+          description: Unix timestamp of when the model was created.
+        owned_by:
+          type: string
+          description: Organization that owns the model.
+    CreateChatCompletionRequest:
+      type: object
+      required:
+        - model
+        - messages
+      properties:
+        model:
+          type: string
+          description: ID of the model to use.
+        messages:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/ChatCompletionRequestMessage'
+        temperature:
+          type: number
+          minimum: 0
+          maximum: 2
+          default: 1
+          description: Sampling temperature.
+        top_p:
+          type: number
+          minimum: 0
+          maximum: 1
+          default: 1
+          description: Nucleus sampling parameter.
+        n:
+          type: integer
+          minimum: 1
+          maximum: 128
+          default: 1
+          description: Number of completions to generate.
+        stream:
+          type: boolean
+          default: false
+          description: Whether to stream partial progress.
+        stop:
+          oneOf:
+            - type: string
+            - type: array
+              items:
+                type: string
+              minItems: 1
+              maxItems: 4
+          description: Stop sequences.
+        max_tokens:
+          type: integer
+          description: Maximum tokens to generate.
+        max_completion_tokens:
+          type: integer
+          description: Maximum completion tokens to generate.
+        presence_penalty:
+          type: number
+          minimum: -2
+          maximum: 2
+          default: 0
+        frequency_penalty:
+          type: number
+          minimum: -2
+          maximum: 2
+          default: 0
+        logit_bias:
+          type: object
+          additionalProperties:
+            type: integer
+        user:
+          type: string
+          description: A unique identifier representing your end-user.
+        seed:
+          type: integer
+          description: Seed for deterministic sampling.
+    ChatCompletionRequestMessage:
+      type: object
+      required:
+        - role
+        - content
+      properties:
+        role:
+          type: string
+          enum: [system, user, assistant, tool, function]
+        content:
+          type: string
+        name:
+          type: string
+        tool_calls:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChatCompletionMessageToolCall'
+        tool_call_id:
+          type: string
+        function_call:
+          $ref: '#/components/schemas/ChatCompletionRequestMessageFunctionCall'
+    ChatCompletionRequestMessageFunctionCall:
+      type: object
+      required:
+        - name
+        - arguments
+      properties:
+        name:
+          type: string
+        arguments:
+          type: string
+    ChatCompletionMessageToolCall:
+      type: object
+      required:
+        - id
+        - type
+        - function
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum: [function]
+        function:
+          type: object
+          required:
+            - name
+            - arguments
+          properties:
+            name:
+              type: string
+            arguments:
+              type: string
+    CreateChatCompletionResponse:
+      type: object
+      required:
+        - id
+        - object
+        - created
+        - model
+        - choices
+      properties:
+        id:
+          type: string
+        object:
+          type: string
+          enum: [chat.completion]
+        created:
+          type: integer
+          format: int64
+        model:
+          type: string
+        choices:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChatCompletionChoice'
+        usage:
+          $ref: '#/components/schemas/CompletionUsage'
+        system_fingerprint:
+          type: string
+        service_tier:
+          type: string
+    ChatCompletionChoice:
+      type: object
+      required:
+        - index
+        - message
+        - finish_reason
+      properties:
+        index:
+          type: integer
+        message:
+          $ref: '#/components/schemas/ChatCompletionResponseMessage'
+        finish_reason:
+          type: string
+          enum: [stop, length, tool_calls, content_filter, function_call]
+        logprobs:
+          $ref: '#/components/schemas/ChatCompletionChoiceLogprobs'
+    ChatCompletionResponseMessage:
+      type: object
+      required:
+        - role
+        - content
+      properties:
+        role:
+          type: string
+          enum: [assistant]
+        content:
+          type: string
+          nullable: true
+        refusal:
+          type: string
+          nullable: true
+        tool_calls:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChatCompletionMessageToolCall'
+        function_call:
+          $ref: '#/components/schemas/ChatCompletionResponseMessageFunctionCall'
+    ChatCompletionResponseMessageFunctionCall:
+      type: object
+      required:
+        - name
+        - arguments
+      properties:
+        name:
+          type: string
+        arguments:
+          type: string
+    ChatCompletionChoiceLogprobs:
+      type: object
+      nullable: true
+      properties:
+        content:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/ChatCompletionTokenLogprob'
+    ChatCompletionTokenLogprob:
+      type: object
+      required:
+        - token
+        - logprob
+        - bytes
+        - top_logprobs
+      properties:
+        token:
+          type: string
+        logprob:
+          type: number
+        bytes:
+          type: array
+          nullable: true
+          items:
+            type: integer
+        top_logprobs:
+          type: array
+          items:
+            type: object
+            required:
+              - token
+              - logprob
+              - bytes
+            properties:
+              token:
+                type: string
+              logprob:
+                type: number
+              bytes:
+                type: array
+                nullable: true
+                items:
+                  type: integer
+    CompletionUsage:
+      type: object
+      required:
+        - prompt_tokens
+        - completion_tokens
+        - total_tokens
+      properties:
+        prompt_tokens:
+          type: integer
+        completion_tokens:
+          type: integer
+        total_tokens:
+          type: integer
+        prompt_tokens_details:
+          $ref: '#/components/schemas/PromptTokensDetails'
+        completion_tokens_details:
+          $ref: '#/components/schemas/CompletionTokensDetails'
+    PromptTokensDetails:
+      type: object
+      properties:
+        cached_tokens:
+          type: integer
+        audio_tokens:
+          type: integer
+    CompletionTokensDetails:
+      type: object
+      properties:
+        reasoning_tokens:
+          type: integer
+        audio_tokens:
+          type: integer
+        accepted_prediction_tokens:
+          type: integer
+        rejected_prediction_tokens:
+          type: integer
+    CreateCompletionRequest:
+      type: object
+      required:
+        - model
+        - prompt
+      properties:
+        model:
+          type: string
+        prompt:
+          oneOf:
+            - type: string
+            - type: array
+              items:
+                type: string
+        suffix:
+          type: string
+          nullable: true
+        max_tokens:
+          type: integer
+          minimum: 0
+          default: 16
+        temperature:
+          type: number
+          minimum: 0
+          maximum: 2
+          default: 1
+        top_p:
+          type: number
+          minimum: 0
+          maximum: 1
+          default: 1
+        n:
+          type: integer
+          minimum: 1
+          maximum: 128
+          default: 1
+        stream:
+          type: boolean
+          default: false
+        logprobs:
+          type: integer
+          minimum: 0
+          maximum: 5
+          nullable: true
+        echo:
+          type: boolean
+          default: false
+        stop:
+          oneOf:
+            - type: string
+            - type: array
+              items:
+                type: string
+              minItems: 1
+              maxItems: 4
+        presence_penalty:
+          type: number
+          minimum: -2
+          maximum: 2
+          default: 0
+        frequency_penalty:
+          type: number
+          minimum: -2
+          maximum: 2
+          default: 0
+        best_of:
+          type: integer
+          minimum: 0
+          maximum: 20
+          default: 1
+        logit_bias:
+          type: object
+          additionalProperties:
+            type: integer
+        user:
+          type: string
+        seed:
+          type: integer
+    CreateCompletionResponse:
+      type: object
+      required:
+        - id
+        - object
+        - created
+        - model
+        - choices
+      properties:
+        id:
+          type: string
+        object:
+          type: string
+          enum: [text_completion]
+        created:
+          type: integer
+          format: int64
+        model:
+          type: string
+        choices:
+          type: array
+          items:
+            $ref: '#/components/schemas/CompletionChoice'
+        usage:
+          $ref: '#/components/schemas/CompletionUsage'
+        system_fingerprint:
+          type: string
+    CompletionChoice:
+      type: object
+      required:
+        - index
+        - text
+        - finish_reason
+      properties:
+        index:
+          type: integer
+        text:
+          type: string
+        logprobs:
+          $ref: '#/components/schemas/CompletionChoiceLogprobs'
+        finish_reason:
+          type: string
+          enum: [stop, length, content_filter]
+    CompletionChoiceLogprobs:
+      type: object
+      nullable: true
+      properties:
+        tokens:
+          type: array
+          items:
+            type: string
+        token_logprobs:
+          type: array
+          items:
+            type: number
+        top_logprobs:
+          type: array
+          items:
+            type: object
+            additionalProperties:
+              type: number
+        text_offset:
+          type: array
+          items:
+            type: integer
+    CreateEmbeddingRequest:
+      type: object
+      required:
+        - model
+        - input
+      properties:
+        model:
+          type: string
+        input:
+          oneOf:
+            - type: string
+            - type: array
+              items:
+                type: string
+            - type: array
+              items:
+                type: integer
+            - type: array
+              items:
+                type: array
+                items:
+                  type: integer
+        encoding_format:
+          type: string
+          enum: [float, base64]
+          default: float
+        dimensions:
+          type: integer
+          minimum: 1
+        user:
+          type: string
+    CreateEmbeddingResponse:
+      type: object
+      required:
+        - object
+        - data
+        - model
+        - usage
+      properties:
+        object:
+          type: string
+          enum: [list]
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Embedding'
+        model:
+          type: string
+        usage:
+          $ref: '#/components/schemas/EmbeddingUsage'
+    Embedding:
+      type: object
+      required:
+        - index
+        - object
+        - embedding
+      properties:
+        index:
+          type: integer
+        object:
+          type: string
+          enum: [embedding]
+        embedding:
+          type: array
+          items:
+            type: number
+    EmbeddingUsage:
+      type: object
+      required:
+        - prompt_tokens
+        - total_tokens
+      properties:
+        prompt_tokens:
+          type: integer
+        total_tokens:
+          type: integer

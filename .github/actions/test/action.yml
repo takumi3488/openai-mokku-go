@@ -1,0 +1,12 @@
+name: Test
+description: Run Docker build test
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3
+
+    - name: Build test
+      shell: bash
+      run: docker build .
