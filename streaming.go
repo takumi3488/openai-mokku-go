@@ -17,6 +17,35 @@ import (
 // CreditErrorModelName is the model name that triggers a 402 credit error
 const CreditErrorModelName = "credit-error"
 
+// modelRequest is used to extract just the model field from any completion request
+type modelRequest struct {
+	Model string `json:"model"`
+}
+
+// readBodyAndCheckCreditError reads the request body, checks if the model triggers a credit error,
+// and returns the body for further processing. Returns nil and true if the request was handled (error written).
+func readBodyAndCheckCreditError(w http.ResponseWriter, r *http.Request) ([]byte, bool) {
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Failed to read request body", http.StatusBadRequest)
+		return nil, true
+	}
+	_ = r.Body.Close()
+
+	var req modelRequest
+	if err := json.Unmarshal(body, &req); err != nil {
+		http.Error(w, "Failed to parse request body", http.StatusBadRequest)
+		return nil, true
+	}
+
+	if req.Model == CreditErrorModelName {
+		writeCreditError(w)
+		return nil, true
+	}
+
+	return body, false
+}
+
 // OpenAIError represents an OpenAI API error response
 type OpenAIError struct {
 	Error OpenAIErrorDetail `json:"error"`
@@ -69,23 +98,14 @@ func NewStreamingHandler(ogenServer http.Handler) *StreamingHandler {
 func (h *StreamingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Intercept POST /v1/chat/completions
 	if r.Method == http.MethodPost && r.URL.Path == "/v1/chat/completions" {
-		// Read the request body to check if streaming is requested
-		body, err := io.ReadAll(r.Body)
-		if err != nil {
-			http.Error(w, "Failed to read request body", http.StatusBadRequest)
+		body, handled := readBodyAndCheckCreditError(w, r)
+		if handled {
 			return
 		}
-		_ = r.Body.Close()
 
 		var req api.CreateChatCompletionRequest
 		if err := json.Unmarshal(body, &req); err != nil {
 			http.Error(w, "Failed to parse request body", http.StatusBadRequest)
-			return
-		}
-
-		// Check if the model triggers a credit error
-		if req.Model == CreditErrorModelName {
-			writeCreditError(w)
 			return
 		}
 
@@ -101,22 +121,8 @@ func (h *StreamingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Intercept POST /v1/completions for credit error simulation
 	if r.Method == http.MethodPost && r.URL.Path == "/v1/completions" {
-		body, err := io.ReadAll(r.Body)
-		if err != nil {
-			http.Error(w, "Failed to read request body", http.StatusBadRequest)
-			return
-		}
-		_ = r.Body.Close()
-
-		var req api.CreateCompletionRequest
-		if err := json.Unmarshal(body, &req); err != nil {
-			http.Error(w, "Failed to parse request body", http.StatusBadRequest)
-			return
-		}
-
-		// Check if the model triggers a credit error
-		if req.Model == CreditErrorModelName {
-			writeCreditError(w)
+		body, handled := readBodyAndCheckCreditError(w, r)
+		if handled {
 			return
 		}
 
