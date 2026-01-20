@@ -69,6 +69,37 @@ curl http://localhost:8080/v1/chat/completions \
 curl http://localhost:8080/v1/models
 ```
 
+## Error Simulation
+
+You can simulate API errors by using special model names.
+
+### 402 Credit Error (insufficient_quota)
+
+Use model name `credit-error` to simulate a quota exceeded error:
+
+```bash
+curl http://localhost:8080/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "credit-error",
+    "messages": [{"role": "user", "content": "Hello!"}]
+  }'
+```
+
+Response:
+```json
+{
+  "error": {
+    "message": "You exceeded your current quota, please check your plan and billing details.",
+    "type": "insufficient_quota",
+    "param": null,
+    "code": "insufficient_quota"
+  }
+}
+```
+
+This works for both `/v1/chat/completions` and `/v1/completions` endpoints.
+
 ## Environment Variables
 
 | Variable | Description | Default |
