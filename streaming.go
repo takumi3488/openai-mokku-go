@@ -1,7 +1,7 @@
 package main
 
 import (
-	"context"
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -16,6 +16,8 @@ import (
 
 // CreditErrorModelName is the model name that triggers a 402 credit error
 const CreditErrorModelName = "credit-error"
+
+const chatCompletionChunkObject = "chat.completion.chunk"
 
 // modelRequest is used to extract just the model field from any completion request
 type modelRequest struct {
@@ -61,11 +63,11 @@ type OpenAIErrorDetail struct {
 
 // ChatCompletionChunk represents a streaming response chunk
 type ChatCompletionChunk struct {
-	ID                string                    `json:"id"`
-	Object            string                    `json:"object"`
-	Created           int64                     `json:"created"`
-	Model             string                    `json:"model"`
-	SystemFingerprint string                    `json:"system_fingerprint,omitempty"`
+	ID                string                      `json:"id"`
+	Object            string                      `json:"object"`
+	Created           int64                       `json:"created"`
+	Model             string                      `json:"model"`
+	SystemFingerprint string                      `json:"system_fingerprint,omitempty"`
 	Choices           []ChatCompletionChunkChoice `json:"choices"`
 }
 
@@ -116,7 +118,7 @@ func (h *StreamingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// For non-streaming requests, reconstruct the body and pass to ogen server
-		r.Body = io.NopCloser(newBytesReader(body))
+		r.Body = io.NopCloser(bytes.NewReader(body))
 	}
 
 	// Intercept POST /v1/completions for credit error simulation
@@ -127,30 +129,11 @@ func (h *StreamingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Reconstruct the body and pass to ogen server
-		r.Body = io.NopCloser(newBytesReader(body))
+		r.Body = io.NopCloser(bytes.NewReader(body))
 	}
 
 	// Pass to ogen server for other requests
 	h.ogenServer.ServeHTTP(w, r)
-}
-
-// bytesReader is a simple bytes.Reader wrapper
-type bytesReader struct {
-	data []byte
-	pos  int
-}
-
-func newBytesReader(data []byte) *bytesReader {
-	return &bytesReader{data: data, pos: 0}
-}
-
-func (r *bytesReader) Read(p []byte) (n int, err error) {
-	if r.pos >= len(r.data) {
-		return 0, io.EOF
-	}
-	n = copy(p, r.data[r.pos:])
-	r.pos += n
-	return n, nil
 }
 
 // handleStreamingRequest handles streaming chat completion requests
@@ -158,19 +141,10 @@ func (h *StreamingHandler) handleStreamingRequest(w http.ResponseWriter, r *http
 	ctx, span := tracer.Start(r.Context(), "CreateChatCompletion.streaming")
 	defer span.End()
 
-	// Log full request as JSON
-	reqJSON, _ := json.Marshal(req)
-	span.SetAttributes(attribute.String("request.full_json", string(reqJSON)))
+	span.SetAttributes(attribute.String("request.full_json", marshalJSON(req)))
 	span.SetAttributes(attribute.Bool("stream", true))
 
-	// Get the last user message
-	var lastUserMessage string
-	for i := len(req.Messages) - 1; i >= 0; i-- {
-		if req.Messages[i].Role == api.ChatCompletionRequestMessageRoleUser {
-			lastUserMessage = req.Messages[i].Content
-			break
-		}
-	}
+	lastUserMessage := extractLastUserMessage(req.Messages)
 
 	span.SetAttributes(
 		attribute.String("model", req.Model),
@@ -178,10 +152,8 @@ func (h *StreamingHandler) handleStreamingRequest(w http.ResponseWriter, r *http
 		attribute.String("last_user_message", lastUserMessage),
 	)
 
-	// Generate echo response
-	echoMessage := generateEchoResponseForStreaming(ctx, lastUserMessage)
+	echoMessage := generateEchoResponse(ctx, lastUserMessage)
 
-	// Set SSE headers
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")
 	w.Header().Set("Connection", "keep-alive")
@@ -199,10 +171,10 @@ func (h *StreamingHandler) handleStreamingRequest(w http.ResponseWriter, r *http
 	// Send first chunk with role
 	firstChunk := ChatCompletionChunk{
 		ID:                completionID,
-		Object:            "chat.completion.chunk",
+		Object:            chatCompletionChunkObject,
 		Created:           created,
 		Model:             req.Model,
-		SystemFingerprint: "fp_mock",
+		SystemFingerprint: systemFingerprint,
 		Choices: []ChatCompletionChunkChoice{
 			{
 				Index: 0,
@@ -223,10 +195,10 @@ func (h *StreamingHandler) handleStreamingRequest(w http.ResponseWriter, r *http
 	// Send content chunk
 	contentChunk := ChatCompletionChunk{
 		ID:                completionID,
-		Object:            "chat.completion.chunk",
+		Object:            chatCompletionChunkObject,
 		Created:           created,
 		Model:             req.Model,
-		SystemFingerprint: "fp_mock",
+		SystemFingerprint: systemFingerprint,
 		Choices: []ChatCompletionChunkChoice{
 			{
 				Index: 0,
@@ -248,10 +220,10 @@ func (h *StreamingHandler) handleStreamingRequest(w http.ResponseWriter, r *http
 	finishReason := "stop"
 	finalChunk := ChatCompletionChunk{
 		ID:                completionID,
-		Object:            "chat.completion.chunk",
+		Object:            chatCompletionChunkObject,
 		Created:           created,
 		Model:             req.Model,
-		SystemFingerprint: "fp_mock",
+		SystemFingerprint: systemFingerprint,
 		Choices: []ChatCompletionChunkChoice{
 			{
 				Index:        0,
@@ -299,18 +271,4 @@ func writeSSEChunk(w http.ResponseWriter, chunk ChatCompletionChunk) error {
 	}
 	_, err = fmt.Fprintf(w, "data: %s\n\n", data)
 	return err
-}
-
-// generateEchoResponseForStreaming generates echo response with tracing
-func generateEchoResponseForStreaming(ctx context.Context, message string) string {
-	_, span := tracer.Start(ctx, "generateEchoResponse")
-	defer span.End()
-
-	span.SetAttributes(attribute.String("input_message", message))
-
-	echoResponse := fmt.Sprintf("Echo: %s", message)
-
-	span.SetAttributes(attribute.String("echo_response", echoResponse))
-
-	return echoResponse
 }

@@ -15,6 +15,13 @@ import (
 
 var tracer = otel.Tracer("openai-mokku")
 
+const systemFingerprint = "fp_mock"
+
+func marshalJSON(v interface{}) string {
+	b, _ := json.Marshal(v)
+	return string(b)
+}
+
 // MockHandler implements the api.Handler interface
 type MockHandler struct{}
 
@@ -25,27 +32,16 @@ func (h *MockHandler) CreateChatCompletion(ctx context.Context, req *api.CreateC
 	ctx, span := tracer.Start(ctx, "CreateChatCompletion.process")
 	defer span.End()
 
-	// Log full request as JSON
-	reqJSON, _ := json.Marshal(req)
-	span.SetAttributes(attribute.String("request.full_json", string(reqJSON)))
+	span.SetAttributes(attribute.String("request.full_json", marshalJSON(req)))
 
-	// Get the last user message
-	var lastUserMessage string
-	for i := len(req.Messages) - 1; i >= 0; i-- {
-		if req.Messages[i].Role == api.ChatCompletionRequestMessageRoleUser {
-			lastUserMessage = req.Messages[i].Content
-			break
-		}
-	}
+	lastUserMessage := extractLastUserMessage(req.Messages)
 
-	// Set basic request attributes
 	attrs := []attribute.KeyValue{
 		attribute.String("model", req.Model),
 		attribute.Int("message_count", len(req.Messages)),
 		attribute.String("last_user_message", lastUserMessage),
 	}
 
-	// Add optional parameters if set
 	if req.Temperature.Set {
 		attrs = append(attrs, attribute.Float64("temperature", req.Temperature.Value))
 	}
@@ -79,15 +75,56 @@ func (h *MockHandler) CreateChatCompletion(ctx context.Context, req *api.CreateC
 
 	span.SetAttributes(attrs...)
 
-	// Generate echo response
-	echoMessage := generateEchoResponse(ctx, lastUserMessage)
+	// Priority: ResponseFormat (json_schema/json_object) > Tools
+	var choices []api.ChatCompletionChoice
+	var completionLen int
 
-	response := &api.CreateChatCompletionResponse{
-		ID:      "chatcmpl-" + uuid.New().String(),
-		Object:  api.CreateChatCompletionResponseObjectChatCompletion,
-		Created: time.Now().Unix(),
-		Model:   req.Model,
-		Choices: []api.ChatCompletionChoice{
+	if req.ResponseFormat.Set &&
+		(req.ResponseFormat.Value.Type == api.ChatCompletionResponseFormatTypeJSONSchema ||
+			req.ResponseFormat.Value.Type == api.ChatCompletionResponseFormatTypeJSONObject) &&
+		req.ResponseFormat.Value.JSONSchema.Set {
+		jsonContent := generateJSONFromSchemaBytes(req.ResponseFormat.Value.JSONSchema.Value.Schema)
+		completionLen = len(jsonContent)
+		choices = []api.ChatCompletionChoice{
+			{
+				Index: 0,
+				Message: api.ChatCompletionResponseMessage{
+					Role:    api.ChatCompletionResponseMessageRoleAssistant,
+					Content: api.NewNilString(jsonContent),
+				},
+				FinishReason: api.ChatCompletionChoiceFinishReasonStop,
+			},
+		}
+	} else if len(req.Tools) > 0 {
+		tool := req.Tools[0]
+		argsMap := map[string]string{"input": lastUserMessage}
+		argsBytes, _ := json.Marshal(argsMap)
+		args := string(argsBytes)
+		completionLen = len(args)
+		choices = []api.ChatCompletionChoice{
+			{
+				Index: 0,
+				Message: api.ChatCompletionResponseMessage{
+					Role:    api.ChatCompletionResponseMessageRoleAssistant,
+					Content: api.NewNilString(""),
+					ToolCalls: []api.ChatCompletionMessageToolCall{
+						{
+							ID:   "call_" + uuid.New().String(),
+							Type: api.ChatCompletionMessageToolCallTypeFunction,
+							Function: api.ChatCompletionMessageToolCallFunction{
+								Name:      tool.Function.Name,
+								Arguments: args,
+							},
+						},
+					},
+				},
+				FinishReason: api.ChatCompletionChoiceFinishReasonToolCalls,
+			},
+		}
+	} else {
+		echoMessage := generateEchoResponse(ctx, lastUserMessage)
+		completionLen = len(echoMessage)
+		choices = []api.ChatCompletionChoice{
 			{
 				Index: 0,
 				Message: api.ChatCompletionResponseMessage{
@@ -96,18 +133,24 @@ func (h *MockHandler) CreateChatCompletion(ctx context.Context, req *api.CreateC
 				},
 				FinishReason: api.ChatCompletionChoiceFinishReasonStop,
 			},
-		},
-		Usage: api.NewOptCompletionUsage(api.CompletionUsage{
-			PromptTokens:     len(lastUserMessage),
-			CompletionTokens: len(echoMessage),
-			TotalTokens:      len(lastUserMessage) + len(echoMessage),
-		}),
-		SystemFingerprint: api.NewOptString("fp_mock"),
+		}
 	}
 
-	// Log full response as JSON
-	respJSON, _ := json.Marshal(response)
-	span.SetAttributes(attribute.String("response.full_json", string(respJSON)))
+	response := &api.CreateChatCompletionResponse{
+		ID:      "chatcmpl-" + uuid.New().String(),
+		Object:  api.CreateChatCompletionResponseObjectChatCompletion,
+		Created: time.Now().Unix(),
+		Model:   req.Model,
+		Choices: choices,
+		Usage: api.NewOptCompletionUsage(api.CompletionUsage{
+			PromptTokens:     len(lastUserMessage),
+			CompletionTokens: completionLen,
+			TotalTokens:      len(lastUserMessage) + completionLen,
+		}),
+		SystemFingerprint: api.NewOptString(systemFingerprint),
+	}
+
+	span.SetAttributes(attribute.String("response.full_json", marshalJSON(response)))
 
 	return response, nil
 }
@@ -128,13 +171,11 @@ func (h *MockHandler) CreateCompletion(ctx context.Context, req *api.CreateCompl
 		}
 	}
 
-	// Set basic request attributes
 	attrs := []attribute.KeyValue{
 		attribute.String("model", req.Model),
 		attribute.String("prompt", prompt),
 	}
 
-	// Add optional parameters if set
 	if req.Temperature.Set {
 		attrs = append(attrs, attribute.Float64("temperature", req.Temperature.Value))
 	}
@@ -171,7 +212,6 @@ func (h *MockHandler) CreateCompletion(ctx context.Context, req *api.CreateCompl
 
 	span.SetAttributes(attrs...)
 
-	// Generate echo response
 	echoText := generateEchoResponse(ctx, prompt)
 
 	response := &api.CreateCompletionResponse{
@@ -191,7 +231,7 @@ func (h *MockHandler) CreateCompletion(ctx context.Context, req *api.CreateCompl
 			CompletionTokens: len(echoText),
 			TotalTokens:      len(prompt) + len(echoText),
 		}),
-		SystemFingerprint: api.NewOptString("fp_mock"),
+		SystemFingerprint: api.NewOptString(systemFingerprint),
 	}
 
 	return response, nil
@@ -240,6 +280,118 @@ func (h *MockHandler) RetrieveModel(ctx context.Context, params api.RetrieveMode
 		Created: time.Now().Unix(),
 		OwnedBy: "openai-mokku",
 	}, nil
+}
+
+// CreateResponse implements createResponse operation.
+func (h *MockHandler) CreateResponse(ctx context.Context, req *api.CreateResponseRequest) (*api.CreateResponseResponse, error) {
+	ctx, span := tracer.Start(ctx, "CreateResponse.process")
+	defer span.End()
+
+	span.SetAttributes(attribute.String("request.full_json", marshalJSON(req)))
+
+	var output []api.ResponseOutputItem
+	var outputText string
+
+	if len(req.Tools) > 0 {
+		// Return function_call output when tools are present
+		tool := req.Tools[0]
+		argsMap := map[string]string{"input": req.Input}
+		argsBytes, _ := json.Marshal(argsMap)
+		args := string(argsBytes)
+		outputText = args
+		output = []api.ResponseOutputItem{
+			{
+				Type:      api.ResponseOutputItemTypeFunctionCall,
+				ID:        api.NewOptString("call_" + uuid.New().String()),
+				CallID:    api.NewOptString("call_" + uuid.New().String()),
+				Name:      api.NewOptString(tool.Name),
+				Arguments: api.NewOptString(args),
+			},
+		}
+	} else {
+		var msgText string
+		if req.Text.Set &&
+			req.Text.Value.Format.Set &&
+			(req.Text.Value.Format.Value.Type == api.ResponseTextFormatTypeJSONSchema ||
+				req.Text.Value.Format.Value.Type == api.ResponseTextFormatTypeJSONObject) {
+			msgText = generateJSONFromSchemaBytes(req.Text.Value.Format.Value.Schema)
+		} else {
+			msgText = generateEchoResponse(ctx, req.Input)
+		}
+		outputText = msgText
+		output = []api.ResponseOutputItem{
+			{
+				Type: api.ResponseOutputItemTypeMessage,
+				ID:   api.NewOptString("msg-" + uuid.New().String()),
+				Role: api.NewOptString("assistant"),
+				Content: []api.ResponseOutputContent{
+					{
+						Type: api.ResponseOutputContentTypeOutputText,
+						Text: msgText,
+					},
+				},
+			},
+		}
+	}
+
+	response := &api.CreateResponseResponse{
+		ID:        "resp-" + uuid.New().String(),
+		Object:    api.CreateResponseResponseObjectResponse,
+		CreatedAt: api.NewOptInt64(time.Now().Unix()),
+		Status:    api.CreateResponseResponseStatusCompleted,
+		Model:     req.Model,
+		Output:    output,
+		Usage: api.ResponseUsage{
+			InputTokens:  len(req.Input),
+			OutputTokens: len(outputText),
+			TotalTokens:  len(req.Input) + len(outputText),
+		},
+	}
+
+	span.SetAttributes(attribute.String("response.full_json", marshalJSON(response)))
+
+	return response, nil
+}
+
+// CreateEmbedding implements createEmbedding operation.
+func (h *MockHandler) CreateEmbedding(ctx context.Context, req *api.CreateEmbeddingRequest) (*api.CreateEmbeddingResponse, error) {
+	_, span := tracer.Start(ctx, "CreateEmbedding.process")
+	defer span.End()
+
+	span.SetAttributes(attribute.String("request.full_json", marshalJSON(req)))
+
+	inputs := normalizeInputStrings(req.Input)
+
+	dimensions := defaultEmbeddingDimensions
+	if req.Dimensions.Set {
+		dimensions = int(req.Dimensions.Value)
+	}
+
+	embeddings := make([]api.Embedding, len(inputs))
+	totalTokens := 0
+	for i, text := range inputs {
+		vector := generateVector(text, dimensions)
+		embeddings[i] = api.Embedding{
+			Index:     i,
+			Object:    api.EmbeddingObjectEmbedding,
+			Embedding: vector,
+		}
+		totalTokens += len(text)
+	}
+
+	response := &api.CreateEmbeddingResponse{
+		Object: api.CreateEmbeddingResponseObjectList,
+		Data:   embeddings,
+		Model:  req.Model,
+		Usage: api.EmbeddingUsage{
+			PromptTokens: totalTokens,
+			TotalTokens:  totalTokens,
+		},
+	}
+
+	span.SetAttributes(attribute.String("response.full_json", marshalJSON(response)))
+
+	return response, nil
 }
 
 func generateEchoResponse(ctx context.Context, message string) string {

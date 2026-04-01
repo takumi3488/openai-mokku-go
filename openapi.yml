@@ -101,6 +101,26 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CreateEmbeddingResponse'
+  /responses:
+    post:
+      operationId: createResponse
+      summary: Create a model response
+      description: Creates a model response using the Responses API.
+      tags:
+        - Responses
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateResponseRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateResponseResponse'
 components:
   schemas:
     ListModelsResponse:
@@ -208,6 +228,54 @@ components:
         seed:
           type: integer
           description: Seed for deterministic sampling.
+        tools:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChatCompletionTool'
+          description: A list of tools the model may call.
+        response_format:
+          $ref: '#/components/schemas/ChatCompletionResponseFormat'
+    ChatCompletionTool:
+      type: object
+      required:
+        - type
+        - function
+      properties:
+        type:
+          type: string
+          enum: [function]
+        function:
+          $ref: '#/components/schemas/ChatCompletionToolFunction'
+    ChatCompletionToolFunction:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        parameters: {}
+    ChatCompletionResponseFormat:
+      type: object
+      required:
+        - type
+      properties:
+        type:
+          type: string
+          enum: [text, json_object, json_schema]
+        json_schema:
+          $ref: '#/components/schemas/ChatCompletionJSONSchemaSpec'
+    ChatCompletionJSONSchemaSpec:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        strict:
+          type: boolean
+        schema: {}
     ChatCompletionRequestMessage:
       type: object
       required:
@@ -573,17 +641,9 @@ components:
             - type: array
               items:
                 type: string
-            - type: array
-              items:
-                type: integer
-            - type: array
-              items:
-                type: array
-                items:
-                  type: integer
         encoding_format:
           type: string
-          enum: [float, base64]
+          enum: [float]
           default: float
         dimensions:
           type: integer
@@ -632,6 +692,129 @@ components:
         - total_tokens
       properties:
         prompt_tokens:
+          type: integer
+        total_tokens:
+          type: integer
+    CreateResponseRequest:
+      type: object
+      required:
+        - model
+        - input
+      properties:
+        model:
+          type: string
+        input:
+          type: string
+        tools:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResponseTool'
+        text:
+          $ref: '#/components/schemas/ResponseTextConfig'
+    ResponseTool:
+      type: object
+      required:
+        - type
+        - name
+      properties:
+        type:
+          type: string
+          enum: [function]
+        name:
+          type: string
+        description:
+          type: string
+        parameters: {}
+    ResponseTextConfig:
+      type: object
+      properties:
+        format:
+          $ref: '#/components/schemas/ResponseTextFormat'
+    ResponseTextFormat:
+      type: object
+      required:
+        - type
+      properties:
+        type:
+          type: string
+          enum: [text, json_schema, json_object]
+        name:
+          type: string
+        schema: {}
+    CreateResponseResponse:
+      type: object
+      required:
+        - id
+        - object
+        - status
+        - model
+        - output
+        - usage
+      properties:
+        id:
+          type: string
+        object:
+          type: string
+          enum: [response]
+        created_at:
+          type: integer
+          format: int64
+        status:
+          type: string
+          enum: [completed, failed, cancelled, queued, in_progress]
+        model:
+          type: string
+        output:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResponseOutputItem'
+        usage:
+          $ref: '#/components/schemas/ResponseUsage'
+    ResponseOutputItem:
+      type: object
+      required:
+        - type
+      properties:
+        type:
+          type: string
+          enum: [message, function_call]
+        id:
+          type: string
+        call_id:
+          type: string
+        name:
+          type: string
+        arguments:
+          type: string
+        role:
+          type: string
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResponseOutputContent'
+        status:
+          type: string
+    ResponseOutputContent:
+      type: object
+      required:
+        - type
+        - text
+      properties:
+        type:
+          type: string
+          enum: [output_text]
+        text:
+          type: string
+    ResponseUsage:
+      type: object
+      required:
+        - input_tokens
+        - output_tokens
+        - total_tokens
+      properties:
+        input_tokens:
+          type: integer
+        output_tokens:
           type: integer
         total_tokens:
           type: integer

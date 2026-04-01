@@ -31,6 +31,24 @@ func (UnimplementedHandler) CreateCompletion(ctx context.Context, req *CreateCom
 	return r, ht.ErrNotImplemented
 }
 
+// CreateEmbedding implements createEmbedding operation.
+//
+// Creates an embedding vector representing the input text.
+//
+// POST /embeddings
+func (UnimplementedHandler) CreateEmbedding(ctx context.Context, req *CreateEmbeddingRequest) (r *CreateEmbeddingResponse, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// CreateResponse implements createResponse operation.
+//
+// Creates a model response using the Responses API.
+//
+// POST /responses
+func (UnimplementedHandler) CreateResponse(ctx context.Context, req *CreateResponseRequest) (r *CreateResponseResponse, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // ListModels implements listModels operation.
 //
 // Lists the currently available models.

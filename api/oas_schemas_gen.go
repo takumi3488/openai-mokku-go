@@ -4,6 +4,7 @@ package api
 
 import (
 	"github.com/go-faster/errors"
+	"github.com/go-faster/jx"
 )
 
 // Ref: #/components/schemas/ChatCompletionChoice
@@ -129,6 +130,43 @@ func (s *ChatCompletionChoiceLogprobs) GetContent() OptNilChatCompletionTokenLog
 // SetContent sets the value of Content.
 func (s *ChatCompletionChoiceLogprobs) SetContent(val OptNilChatCompletionTokenLogprobArray) {
 	s.Content = val
+}
+
+// Ref: #/components/schemas/ChatCompletionJSONSchemaSpec
+type ChatCompletionJSONSchemaSpec struct {
+	Name   string  `json:"name"`
+	Strict OptBool `json:"strict"`
+	Schema jx.Raw  `json:"schema"`
+}
+
+// GetName returns the value of Name.
+func (s *ChatCompletionJSONSchemaSpec) GetName() string {
+	return s.Name
+}
+
+// GetStrict returns the value of Strict.
+func (s *ChatCompletionJSONSchemaSpec) GetStrict() OptBool {
+	return s.Strict
+}
+
+// GetSchema returns the value of Schema.
+func (s *ChatCompletionJSONSchemaSpec) GetSchema() jx.Raw {
+	return s.Schema
+}
+
+// SetName sets the value of Name.
+func (s *ChatCompletionJSONSchemaSpec) SetName(val string) {
+	s.Name = val
+}
+
+// SetStrict sets the value of Strict.
+func (s *ChatCompletionJSONSchemaSpec) SetStrict(val OptBool) {
+	s.Strict = val
+}
+
+// SetSchema sets the value of Schema.
+func (s *ChatCompletionJSONSchemaSpec) SetSchema(val jx.Raw) {
+	s.Schema = val
 }
 
 // Ref: #/components/schemas/ChatCompletionMessageToolCall
@@ -385,6 +423,80 @@ func (s *ChatCompletionRequestMessageRole) UnmarshalText(data []byte) error {
 	}
 }
 
+// Ref: #/components/schemas/ChatCompletionResponseFormat
+type ChatCompletionResponseFormat struct {
+	Type       ChatCompletionResponseFormatType `json:"type"`
+	JSONSchema OptChatCompletionJSONSchemaSpec  `json:"json_schema"`
+}
+
+// GetType returns the value of Type.
+func (s *ChatCompletionResponseFormat) GetType() ChatCompletionResponseFormatType {
+	return s.Type
+}
+
+// GetJSONSchema returns the value of JSONSchema.
+func (s *ChatCompletionResponseFormat) GetJSONSchema() OptChatCompletionJSONSchemaSpec {
+	return s.JSONSchema
+}
+
+// SetType sets the value of Type.
+func (s *ChatCompletionResponseFormat) SetType(val ChatCompletionResponseFormatType) {
+	s.Type = val
+}
+
+// SetJSONSchema sets the value of JSONSchema.
+func (s *ChatCompletionResponseFormat) SetJSONSchema(val OptChatCompletionJSONSchemaSpec) {
+	s.JSONSchema = val
+}
+
+type ChatCompletionResponseFormatType string
+
+const (
+	ChatCompletionResponseFormatTypeText       ChatCompletionResponseFormatType = "text"
+	ChatCompletionResponseFormatTypeJSONObject ChatCompletionResponseFormatType = "json_object"
+	ChatCompletionResponseFormatTypeJSONSchema ChatCompletionResponseFormatType = "json_schema"
+)
+
+// AllValues returns all ChatCompletionResponseFormatType values.
+func (ChatCompletionResponseFormatType) AllValues() []ChatCompletionResponseFormatType {
+	return []ChatCompletionResponseFormatType{
+		ChatCompletionResponseFormatTypeText,
+		ChatCompletionResponseFormatTypeJSONObject,
+		ChatCompletionResponseFormatTypeJSONSchema,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s ChatCompletionResponseFormatType) MarshalText() ([]byte, error) {
+	switch s {
+	case ChatCompletionResponseFormatTypeText:
+		return []byte(s), nil
+	case ChatCompletionResponseFormatTypeJSONObject:
+		return []byte(s), nil
+	case ChatCompletionResponseFormatTypeJSONSchema:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *ChatCompletionResponseFormatType) UnmarshalText(data []byte) error {
+	switch ChatCompletionResponseFormatType(data) {
+	case ChatCompletionResponseFormatTypeText:
+		*s = ChatCompletionResponseFormatTypeText
+		return nil
+	case ChatCompletionResponseFormatTypeJSONObject:
+		*s = ChatCompletionResponseFormatTypeJSONObject
+		return nil
+	case ChatCompletionResponseFormatTypeJSONSchema:
+		*s = ChatCompletionResponseFormatTypeJSONSchema
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
 // Ref: #/components/schemas/ChatCompletionResponseMessage
 type ChatCompletionResponseMessage struct {
 	Role         ChatCompletionResponseMessageRole            `json:"role"`
@@ -586,6 +698,103 @@ func (s *ChatCompletionTokenLogprobTopLogprobsItem) SetLogprob(val float64) {
 // SetBytes sets the value of Bytes.
 func (s *ChatCompletionTokenLogprobTopLogprobsItem) SetBytes(val []int) {
 	s.Bytes = val
+}
+
+// Ref: #/components/schemas/ChatCompletionTool
+type ChatCompletionTool struct {
+	Type     ChatCompletionToolType     `json:"type"`
+	Function ChatCompletionToolFunction `json:"function"`
+}
+
+// GetType returns the value of Type.
+func (s *ChatCompletionTool) GetType() ChatCompletionToolType {
+	return s.Type
+}
+
+// GetFunction returns the value of Function.
+func (s *ChatCompletionTool) GetFunction() ChatCompletionToolFunction {
+	return s.Function
+}
+
+// SetType sets the value of Type.
+func (s *ChatCompletionTool) SetType(val ChatCompletionToolType) {
+	s.Type = val
+}
+
+// SetFunction sets the value of Function.
+func (s *ChatCompletionTool) SetFunction(val ChatCompletionToolFunction) {
+	s.Function = val
+}
+
+// Ref: #/components/schemas/ChatCompletionToolFunction
+type ChatCompletionToolFunction struct {
+	Name        string    `json:"name"`
+	Description OptString `json:"description"`
+	Parameters  jx.Raw    `json:"parameters"`
+}
+
+// GetName returns the value of Name.
+func (s *ChatCompletionToolFunction) GetName() string {
+	return s.Name
+}
+
+// GetDescription returns the value of Description.
+func (s *ChatCompletionToolFunction) GetDescription() OptString {
+	return s.Description
+}
+
+// GetParameters returns the value of Parameters.
+func (s *ChatCompletionToolFunction) GetParameters() jx.Raw {
+	return s.Parameters
+}
+
+// SetName sets the value of Name.
+func (s *ChatCompletionToolFunction) SetName(val string) {
+	s.Name = val
+}
+
+// SetDescription sets the value of Description.
+func (s *ChatCompletionToolFunction) SetDescription(val OptString) {
+	s.Description = val
+}
+
+// SetParameters sets the value of Parameters.
+func (s *ChatCompletionToolFunction) SetParameters(val jx.Raw) {
+	s.Parameters = val
+}
+
+type ChatCompletionToolType string
+
+const (
+	ChatCompletionToolTypeFunction ChatCompletionToolType = "function"
+)
+
+// AllValues returns all ChatCompletionToolType values.
+func (ChatCompletionToolType) AllValues() []ChatCompletionToolType {
+	return []ChatCompletionToolType{
+		ChatCompletionToolTypeFunction,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s ChatCompletionToolType) MarshalText() ([]byte, error) {
+	switch s {
+	case ChatCompletionToolTypeFunction:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *ChatCompletionToolType) UnmarshalText(data []byte) error {
+	switch ChatCompletionToolType(data) {
+	case ChatCompletionToolTypeFunction:
+		*s = ChatCompletionToolTypeFunction
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
 }
 
 // Ref: #/components/schemas/CompletionChoice
@@ -876,6 +1085,9 @@ type CreateChatCompletionRequest struct {
 	User OptString `json:"user"`
 	// Seed for deterministic sampling.
 	Seed OptInt `json:"seed"`
+	// A list of tools the model may call.
+	Tools          []ChatCompletionTool            `json:"tools"`
+	ResponseFormat OptChatCompletionResponseFormat `json:"response_format"`
 }
 
 // GetModel returns the value of Model.
@@ -948,6 +1160,16 @@ func (s *CreateChatCompletionRequest) GetSeed() OptInt {
 	return s.Seed
 }
 
+// GetTools returns the value of Tools.
+func (s *CreateChatCompletionRequest) GetTools() []ChatCompletionTool {
+	return s.Tools
+}
+
+// GetResponseFormat returns the value of ResponseFormat.
+func (s *CreateChatCompletionRequest) GetResponseFormat() OptChatCompletionResponseFormat {
+	return s.ResponseFormat
+}
+
 // SetModel sets the value of Model.
 func (s *CreateChatCompletionRequest) SetModel(val string) {
 	s.Model = val
@@ -1016,6 +1238,16 @@ func (s *CreateChatCompletionRequest) SetUser(val OptString) {
 // SetSeed sets the value of Seed.
 func (s *CreateChatCompletionRequest) SetSeed(val OptInt) {
 	s.Seed = val
+}
+
+// SetTools sets the value of Tools.
+func (s *CreateChatCompletionRequest) SetTools(val []ChatCompletionTool) {
+	s.Tools = val
+}
+
+// SetResponseFormat sets the value of ResponseFormat.
+func (s *CreateChatCompletionRequest) SetResponseFormat(val OptChatCompletionResponseFormat) {
+	s.ResponseFormat = val
 }
 
 type CreateChatCompletionRequestLogitBias map[string]int
@@ -1677,6 +1909,571 @@ func (s *CreateCompletionResponseObject) UnmarshalText(data []byte) error {
 	}
 }
 
+// Ref: #/components/schemas/CreateEmbeddingRequest
+type CreateEmbeddingRequest struct {
+	Model          string                                  `json:"model"`
+	Input          CreateEmbeddingRequestInput             `json:"input"`
+	EncodingFormat OptCreateEmbeddingRequestEncodingFormat `json:"encoding_format"`
+	Dimensions     OptInt                                  `json:"dimensions"`
+	User           OptString                               `json:"user"`
+}
+
+// GetModel returns the value of Model.
+func (s *CreateEmbeddingRequest) GetModel() string {
+	return s.Model
+}
+
+// GetInput returns the value of Input.
+func (s *CreateEmbeddingRequest) GetInput() CreateEmbeddingRequestInput {
+	return s.Input
+}
+
+// GetEncodingFormat returns the value of EncodingFormat.
+func (s *CreateEmbeddingRequest) GetEncodingFormat() OptCreateEmbeddingRequestEncodingFormat {
+	return s.EncodingFormat
+}
+
+// GetDimensions returns the value of Dimensions.
+func (s *CreateEmbeddingRequest) GetDimensions() OptInt {
+	return s.Dimensions
+}
+
+// GetUser returns the value of User.
+func (s *CreateEmbeddingRequest) GetUser() OptString {
+	return s.User
+}
+
+// SetModel sets the value of Model.
+func (s *CreateEmbeddingRequest) SetModel(val string) {
+	s.Model = val
+}
+
+// SetInput sets the value of Input.
+func (s *CreateEmbeddingRequest) SetInput(val CreateEmbeddingRequestInput) {
+	s.Input = val
+}
+
+// SetEncodingFormat sets the value of EncodingFormat.
+func (s *CreateEmbeddingRequest) SetEncodingFormat(val OptCreateEmbeddingRequestEncodingFormat) {
+	s.EncodingFormat = val
+}
+
+// SetDimensions sets the value of Dimensions.
+func (s *CreateEmbeddingRequest) SetDimensions(val OptInt) {
+	s.Dimensions = val
+}
+
+// SetUser sets the value of User.
+func (s *CreateEmbeddingRequest) SetUser(val OptString) {
+	s.User = val
+}
+
+type CreateEmbeddingRequestEncodingFormat string
+
+const (
+	CreateEmbeddingRequestEncodingFormatFloat CreateEmbeddingRequestEncodingFormat = "float"
+)
+
+// AllValues returns all CreateEmbeddingRequestEncodingFormat values.
+func (CreateEmbeddingRequestEncodingFormat) AllValues() []CreateEmbeddingRequestEncodingFormat {
+	return []CreateEmbeddingRequestEncodingFormat{
+		CreateEmbeddingRequestEncodingFormatFloat,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s CreateEmbeddingRequestEncodingFormat) MarshalText() ([]byte, error) {
+	switch s {
+	case CreateEmbeddingRequestEncodingFormatFloat:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *CreateEmbeddingRequestEncodingFormat) UnmarshalText(data []byte) error {
+	switch CreateEmbeddingRequestEncodingFormat(data) {
+	case CreateEmbeddingRequestEncodingFormatFloat:
+		*s = CreateEmbeddingRequestEncodingFormatFloat
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// CreateEmbeddingRequestInput represents sum type.
+type CreateEmbeddingRequestInput struct {
+	Type        CreateEmbeddingRequestInputType // switch on this field
+	String      string
+	StringArray []string
+}
+
+// CreateEmbeddingRequestInputType is oneOf type of CreateEmbeddingRequestInput.
+type CreateEmbeddingRequestInputType string
+
+// Possible values for CreateEmbeddingRequestInputType.
+const (
+	StringCreateEmbeddingRequestInput      CreateEmbeddingRequestInputType = "string"
+	StringArrayCreateEmbeddingRequestInput CreateEmbeddingRequestInputType = "[]string"
+)
+
+// IsString reports whether CreateEmbeddingRequestInput is string.
+func (s CreateEmbeddingRequestInput) IsString() bool {
+	return s.Type == StringCreateEmbeddingRequestInput
+}
+
+// IsStringArray reports whether CreateEmbeddingRequestInput is []string.
+func (s CreateEmbeddingRequestInput) IsStringArray() bool {
+	return s.Type == StringArrayCreateEmbeddingRequestInput
+}
+
+// SetString sets CreateEmbeddingRequestInput to string.
+func (s *CreateEmbeddingRequestInput) SetString(v string) {
+	s.Type = StringCreateEmbeddingRequestInput
+	s.String = v
+}
+
+// GetString returns string and true boolean if CreateEmbeddingRequestInput is string.
+func (s CreateEmbeddingRequestInput) GetString() (v string, ok bool) {
+	if !s.IsString() {
+		return v, false
+	}
+	return s.String, true
+}
+
+// NewStringCreateEmbeddingRequestInput returns new CreateEmbeddingRequestInput from string.
+func NewStringCreateEmbeddingRequestInput(v string) CreateEmbeddingRequestInput {
+	var s CreateEmbeddingRequestInput
+	s.SetString(v)
+	return s
+}
+
+// SetStringArray sets CreateEmbeddingRequestInput to []string.
+func (s *CreateEmbeddingRequestInput) SetStringArray(v []string) {
+	s.Type = StringArrayCreateEmbeddingRequestInput
+	s.StringArray = v
+}
+
+// GetStringArray returns []string and true boolean if CreateEmbeddingRequestInput is []string.
+func (s CreateEmbeddingRequestInput) GetStringArray() (v []string, ok bool) {
+	if !s.IsStringArray() {
+		return v, false
+	}
+	return s.StringArray, true
+}
+
+// NewStringArrayCreateEmbeddingRequestInput returns new CreateEmbeddingRequestInput from []string.
+func NewStringArrayCreateEmbeddingRequestInput(v []string) CreateEmbeddingRequestInput {
+	var s CreateEmbeddingRequestInput
+	s.SetStringArray(v)
+	return s
+}
+
+// Ref: #/components/schemas/CreateEmbeddingResponse
+type CreateEmbeddingResponse struct {
+	Object CreateEmbeddingResponseObject `json:"object"`
+	Data   []Embedding                   `json:"data"`
+	Model  string                        `json:"model"`
+	Usage  EmbeddingUsage                `json:"usage"`
+}
+
+// GetObject returns the value of Object.
+func (s *CreateEmbeddingResponse) GetObject() CreateEmbeddingResponseObject {
+	return s.Object
+}
+
+// GetData returns the value of Data.
+func (s *CreateEmbeddingResponse) GetData() []Embedding {
+	return s.Data
+}
+
+// GetModel returns the value of Model.
+func (s *CreateEmbeddingResponse) GetModel() string {
+	return s.Model
+}
+
+// GetUsage returns the value of Usage.
+func (s *CreateEmbeddingResponse) GetUsage() EmbeddingUsage {
+	return s.Usage
+}
+
+// SetObject sets the value of Object.
+func (s *CreateEmbeddingResponse) SetObject(val CreateEmbeddingResponseObject) {
+	s.Object = val
+}
+
+// SetData sets the value of Data.
+func (s *CreateEmbeddingResponse) SetData(val []Embedding) {
+	s.Data = val
+}
+
+// SetModel sets the value of Model.
+func (s *CreateEmbeddingResponse) SetModel(val string) {
+	s.Model = val
+}
+
+// SetUsage sets the value of Usage.
+func (s *CreateEmbeddingResponse) SetUsage(val EmbeddingUsage) {
+	s.Usage = val
+}
+
+type CreateEmbeddingResponseObject string
+
+const (
+	CreateEmbeddingResponseObjectList CreateEmbeddingResponseObject = "list"
+)
+
+// AllValues returns all CreateEmbeddingResponseObject values.
+func (CreateEmbeddingResponseObject) AllValues() []CreateEmbeddingResponseObject {
+	return []CreateEmbeddingResponseObject{
+		CreateEmbeddingResponseObjectList,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s CreateEmbeddingResponseObject) MarshalText() ([]byte, error) {
+	switch s {
+	case CreateEmbeddingResponseObjectList:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *CreateEmbeddingResponseObject) UnmarshalText(data []byte) error {
+	switch CreateEmbeddingResponseObject(data) {
+	case CreateEmbeddingResponseObjectList:
+		*s = CreateEmbeddingResponseObjectList
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Ref: #/components/schemas/CreateResponseRequest
+type CreateResponseRequest struct {
+	Model string                `json:"model"`
+	Input string                `json:"input"`
+	Tools []ResponseTool        `json:"tools"`
+	Text  OptResponseTextConfig `json:"text"`
+}
+
+// GetModel returns the value of Model.
+func (s *CreateResponseRequest) GetModel() string {
+	return s.Model
+}
+
+// GetInput returns the value of Input.
+func (s *CreateResponseRequest) GetInput() string {
+	return s.Input
+}
+
+// GetTools returns the value of Tools.
+func (s *CreateResponseRequest) GetTools() []ResponseTool {
+	return s.Tools
+}
+
+// GetText returns the value of Text.
+func (s *CreateResponseRequest) GetText() OptResponseTextConfig {
+	return s.Text
+}
+
+// SetModel sets the value of Model.
+func (s *CreateResponseRequest) SetModel(val string) {
+	s.Model = val
+}
+
+// SetInput sets the value of Input.
+func (s *CreateResponseRequest) SetInput(val string) {
+	s.Input = val
+}
+
+// SetTools sets the value of Tools.
+func (s *CreateResponseRequest) SetTools(val []ResponseTool) {
+	s.Tools = val
+}
+
+// SetText sets the value of Text.
+func (s *CreateResponseRequest) SetText(val OptResponseTextConfig) {
+	s.Text = val
+}
+
+// Ref: #/components/schemas/CreateResponseResponse
+type CreateResponseResponse struct {
+	ID        string                       `json:"id"`
+	Object    CreateResponseResponseObject `json:"object"`
+	CreatedAt OptInt64                     `json:"created_at"`
+	Status    CreateResponseResponseStatus `json:"status"`
+	Model     string                       `json:"model"`
+	Output    []ResponseOutputItem         `json:"output"`
+	Usage     ResponseUsage                `json:"usage"`
+}
+
+// GetID returns the value of ID.
+func (s *CreateResponseResponse) GetID() string {
+	return s.ID
+}
+
+// GetObject returns the value of Object.
+func (s *CreateResponseResponse) GetObject() CreateResponseResponseObject {
+	return s.Object
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *CreateResponseResponse) GetCreatedAt() OptInt64 {
+	return s.CreatedAt
+}
+
+// GetStatus returns the value of Status.
+func (s *CreateResponseResponse) GetStatus() CreateResponseResponseStatus {
+	return s.Status
+}
+
+// GetModel returns the value of Model.
+func (s *CreateResponseResponse) GetModel() string {
+	return s.Model
+}
+
+// GetOutput returns the value of Output.
+func (s *CreateResponseResponse) GetOutput() []ResponseOutputItem {
+	return s.Output
+}
+
+// GetUsage returns the value of Usage.
+func (s *CreateResponseResponse) GetUsage() ResponseUsage {
+	return s.Usage
+}
+
+// SetID sets the value of ID.
+func (s *CreateResponseResponse) SetID(val string) {
+	s.ID = val
+}
+
+// SetObject sets the value of Object.
+func (s *CreateResponseResponse) SetObject(val CreateResponseResponseObject) {
+	s.Object = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *CreateResponseResponse) SetCreatedAt(val OptInt64) {
+	s.CreatedAt = val
+}
+
+// SetStatus sets the value of Status.
+func (s *CreateResponseResponse) SetStatus(val CreateResponseResponseStatus) {
+	s.Status = val
+}
+
+// SetModel sets the value of Model.
+func (s *CreateResponseResponse) SetModel(val string) {
+	s.Model = val
+}
+
+// SetOutput sets the value of Output.
+func (s *CreateResponseResponse) SetOutput(val []ResponseOutputItem) {
+	s.Output = val
+}
+
+// SetUsage sets the value of Usage.
+func (s *CreateResponseResponse) SetUsage(val ResponseUsage) {
+	s.Usage = val
+}
+
+type CreateResponseResponseObject string
+
+const (
+	CreateResponseResponseObjectResponse CreateResponseResponseObject = "response"
+)
+
+// AllValues returns all CreateResponseResponseObject values.
+func (CreateResponseResponseObject) AllValues() []CreateResponseResponseObject {
+	return []CreateResponseResponseObject{
+		CreateResponseResponseObjectResponse,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s CreateResponseResponseObject) MarshalText() ([]byte, error) {
+	switch s {
+	case CreateResponseResponseObjectResponse:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *CreateResponseResponseObject) UnmarshalText(data []byte) error {
+	switch CreateResponseResponseObject(data) {
+	case CreateResponseResponseObjectResponse:
+		*s = CreateResponseResponseObjectResponse
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type CreateResponseResponseStatus string
+
+const (
+	CreateResponseResponseStatusCompleted  CreateResponseResponseStatus = "completed"
+	CreateResponseResponseStatusFailed     CreateResponseResponseStatus = "failed"
+	CreateResponseResponseStatusCancelled  CreateResponseResponseStatus = "cancelled"
+	CreateResponseResponseStatusQueued     CreateResponseResponseStatus = "queued"
+	CreateResponseResponseStatusInProgress CreateResponseResponseStatus = "in_progress"
+)
+
+// AllValues returns all CreateResponseResponseStatus values.
+func (CreateResponseResponseStatus) AllValues() []CreateResponseResponseStatus {
+	return []CreateResponseResponseStatus{
+		CreateResponseResponseStatusCompleted,
+		CreateResponseResponseStatusFailed,
+		CreateResponseResponseStatusCancelled,
+		CreateResponseResponseStatusQueued,
+		CreateResponseResponseStatusInProgress,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s CreateResponseResponseStatus) MarshalText() ([]byte, error) {
+	switch s {
+	case CreateResponseResponseStatusCompleted:
+		return []byte(s), nil
+	case CreateResponseResponseStatusFailed:
+		return []byte(s), nil
+	case CreateResponseResponseStatusCancelled:
+		return []byte(s), nil
+	case CreateResponseResponseStatusQueued:
+		return []byte(s), nil
+	case CreateResponseResponseStatusInProgress:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *CreateResponseResponseStatus) UnmarshalText(data []byte) error {
+	switch CreateResponseResponseStatus(data) {
+	case CreateResponseResponseStatusCompleted:
+		*s = CreateResponseResponseStatusCompleted
+		return nil
+	case CreateResponseResponseStatusFailed:
+		*s = CreateResponseResponseStatusFailed
+		return nil
+	case CreateResponseResponseStatusCancelled:
+		*s = CreateResponseResponseStatusCancelled
+		return nil
+	case CreateResponseResponseStatusQueued:
+		*s = CreateResponseResponseStatusQueued
+		return nil
+	case CreateResponseResponseStatusInProgress:
+		*s = CreateResponseResponseStatusInProgress
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Ref: #/components/schemas/Embedding
+type Embedding struct {
+	Index     int             `json:"index"`
+	Object    EmbeddingObject `json:"object"`
+	Embedding []float64       `json:"embedding"`
+}
+
+// GetIndex returns the value of Index.
+func (s *Embedding) GetIndex() int {
+	return s.Index
+}
+
+// GetObject returns the value of Object.
+func (s *Embedding) GetObject() EmbeddingObject {
+	return s.Object
+}
+
+// GetEmbedding returns the value of Embedding.
+func (s *Embedding) GetEmbedding() []float64 {
+	return s.Embedding
+}
+
+// SetIndex sets the value of Index.
+func (s *Embedding) SetIndex(val int) {
+	s.Index = val
+}
+
+// SetObject sets the value of Object.
+func (s *Embedding) SetObject(val EmbeddingObject) {
+	s.Object = val
+}
+
+// SetEmbedding sets the value of Embedding.
+func (s *Embedding) SetEmbedding(val []float64) {
+	s.Embedding = val
+}
+
+type EmbeddingObject string
+
+const (
+	EmbeddingObjectEmbedding EmbeddingObject = "embedding"
+)
+
+// AllValues returns all EmbeddingObject values.
+func (EmbeddingObject) AllValues() []EmbeddingObject {
+	return []EmbeddingObject{
+		EmbeddingObjectEmbedding,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s EmbeddingObject) MarshalText() ([]byte, error) {
+	switch s {
+	case EmbeddingObjectEmbedding:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *EmbeddingObject) UnmarshalText(data []byte) error {
+	switch EmbeddingObject(data) {
+	case EmbeddingObjectEmbedding:
+		*s = EmbeddingObjectEmbedding
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Ref: #/components/schemas/EmbeddingUsage
+type EmbeddingUsage struct {
+	PromptTokens int `json:"prompt_tokens"`
+	TotalTokens  int `json:"total_tokens"`
+}
+
+// GetPromptTokens returns the value of PromptTokens.
+func (s *EmbeddingUsage) GetPromptTokens() int {
+	return s.PromptTokens
+}
+
+// GetTotalTokens returns the value of TotalTokens.
+func (s *EmbeddingUsage) GetTotalTokens() int {
+	return s.TotalTokens
+}
+
+// SetPromptTokens sets the value of PromptTokens.
+func (s *EmbeddingUsage) SetPromptTokens(val int) {
+	s.PromptTokens = val
+}
+
+// SetTotalTokens sets the value of TotalTokens.
+func (s *EmbeddingUsage) SetTotalTokens(val int) {
+	s.TotalTokens = val
+}
+
 // Ref: #/components/schemas/ListModelsResponse
 type ListModelsResponse struct {
 	Object ListModelsResponseObject `json:"object"`
@@ -1913,6 +2710,52 @@ func (o OptBool) Or(d bool) bool {
 	return d
 }
 
+// NewOptChatCompletionJSONSchemaSpec returns new OptChatCompletionJSONSchemaSpec with value set to v.
+func NewOptChatCompletionJSONSchemaSpec(v ChatCompletionJSONSchemaSpec) OptChatCompletionJSONSchemaSpec {
+	return OptChatCompletionJSONSchemaSpec{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptChatCompletionJSONSchemaSpec is optional ChatCompletionJSONSchemaSpec.
+type OptChatCompletionJSONSchemaSpec struct {
+	Value ChatCompletionJSONSchemaSpec
+	Set   bool
+}
+
+// IsSet returns true if OptChatCompletionJSONSchemaSpec was set.
+func (o OptChatCompletionJSONSchemaSpec) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptChatCompletionJSONSchemaSpec) Reset() {
+	var v ChatCompletionJSONSchemaSpec
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptChatCompletionJSONSchemaSpec) SetTo(v ChatCompletionJSONSchemaSpec) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptChatCompletionJSONSchemaSpec) Get() (v ChatCompletionJSONSchemaSpec, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptChatCompletionJSONSchemaSpec) Or(d ChatCompletionJSONSchemaSpec) ChatCompletionJSONSchemaSpec {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptChatCompletionRequestMessageFunctionCall returns new OptChatCompletionRequestMessageFunctionCall with value set to v.
 func NewOptChatCompletionRequestMessageFunctionCall(v ChatCompletionRequestMessageFunctionCall) OptChatCompletionRequestMessageFunctionCall {
 	return OptChatCompletionRequestMessageFunctionCall{
@@ -1953,6 +2796,52 @@ func (o OptChatCompletionRequestMessageFunctionCall) Get() (v ChatCompletionRequ
 
 // Or returns value if set, or given parameter if does not.
 func (o OptChatCompletionRequestMessageFunctionCall) Or(d ChatCompletionRequestMessageFunctionCall) ChatCompletionRequestMessageFunctionCall {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptChatCompletionResponseFormat returns new OptChatCompletionResponseFormat with value set to v.
+func NewOptChatCompletionResponseFormat(v ChatCompletionResponseFormat) OptChatCompletionResponseFormat {
+	return OptChatCompletionResponseFormat{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptChatCompletionResponseFormat is optional ChatCompletionResponseFormat.
+type OptChatCompletionResponseFormat struct {
+	Value ChatCompletionResponseFormat
+	Set   bool
+}
+
+// IsSet returns true if OptChatCompletionResponseFormat was set.
+func (o OptChatCompletionResponseFormat) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptChatCompletionResponseFormat) Reset() {
+	var v ChatCompletionResponseFormat
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptChatCompletionResponseFormat) SetTo(v ChatCompletionResponseFormat) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptChatCompletionResponseFormat) Get() (v ChatCompletionResponseFormat, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptChatCompletionResponseFormat) Or(d ChatCompletionResponseFormat) ChatCompletionResponseFormat {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -2281,6 +3170,52 @@ func (o OptCreateCompletionRequestStop) Or(d CreateCompletionRequestStop) Create
 	return d
 }
 
+// NewOptCreateEmbeddingRequestEncodingFormat returns new OptCreateEmbeddingRequestEncodingFormat with value set to v.
+func NewOptCreateEmbeddingRequestEncodingFormat(v CreateEmbeddingRequestEncodingFormat) OptCreateEmbeddingRequestEncodingFormat {
+	return OptCreateEmbeddingRequestEncodingFormat{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptCreateEmbeddingRequestEncodingFormat is optional CreateEmbeddingRequestEncodingFormat.
+type OptCreateEmbeddingRequestEncodingFormat struct {
+	Value CreateEmbeddingRequestEncodingFormat
+	Set   bool
+}
+
+// IsSet returns true if OptCreateEmbeddingRequestEncodingFormat was set.
+func (o OptCreateEmbeddingRequestEncodingFormat) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptCreateEmbeddingRequestEncodingFormat) Reset() {
+	var v CreateEmbeddingRequestEncodingFormat
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptCreateEmbeddingRequestEncodingFormat) SetTo(v CreateEmbeddingRequestEncodingFormat) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptCreateEmbeddingRequestEncodingFormat) Get() (v CreateEmbeddingRequestEncodingFormat, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptCreateEmbeddingRequestEncodingFormat) Or(d CreateEmbeddingRequestEncodingFormat) CreateEmbeddingRequestEncodingFormat {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptFloat64 returns new OptFloat64 with value set to v.
 func NewOptFloat64(v float64) OptFloat64 {
 	return OptFloat64{
@@ -2367,6 +3302,52 @@ func (o OptInt) Get() (v int, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptInt) Or(d int) int {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptInt64 returns new OptInt64 with value set to v.
+func NewOptInt64(v int64) OptInt64 {
+	return OptInt64{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptInt64 is optional int64.
+type OptInt64 struct {
+	Value int64
+	Set   bool
+}
+
+// IsSet returns true if OptInt64 was set.
+func (o OptInt64) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptInt64) Reset() {
+	var v int64
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptInt64) SetTo(v int64) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptInt64) Get() (v int64, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptInt64) Or(d int64) int64 {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -2734,6 +3715,98 @@ func (o OptPromptTokensDetails) Or(d PromptTokensDetails) PromptTokensDetails {
 	return d
 }
 
+// NewOptResponseTextConfig returns new OptResponseTextConfig with value set to v.
+func NewOptResponseTextConfig(v ResponseTextConfig) OptResponseTextConfig {
+	return OptResponseTextConfig{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptResponseTextConfig is optional ResponseTextConfig.
+type OptResponseTextConfig struct {
+	Value ResponseTextConfig
+	Set   bool
+}
+
+// IsSet returns true if OptResponseTextConfig was set.
+func (o OptResponseTextConfig) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptResponseTextConfig) Reset() {
+	var v ResponseTextConfig
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptResponseTextConfig) SetTo(v ResponseTextConfig) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptResponseTextConfig) Get() (v ResponseTextConfig, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptResponseTextConfig) Or(d ResponseTextConfig) ResponseTextConfig {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptResponseTextFormat returns new OptResponseTextFormat with value set to v.
+func NewOptResponseTextFormat(v ResponseTextFormat) OptResponseTextFormat {
+	return OptResponseTextFormat{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptResponseTextFormat is optional ResponseTextFormat.
+type OptResponseTextFormat struct {
+	Value ResponseTextFormat
+	Set   bool
+}
+
+// IsSet returns true if OptResponseTextFormat was set.
+func (o OptResponseTextFormat) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptResponseTextFormat) Reset() {
+	var v ResponseTextFormat
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptResponseTextFormat) SetTo(v ResponseTextFormat) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptResponseTextFormat) Get() (v ResponseTextFormat, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptResponseTextFormat) Or(d ResponseTextFormat) ResponseTextFormat {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptString returns new OptString with value set to v.
 func NewOptString(v string) OptString {
 	return OptString{
@@ -2804,4 +3877,416 @@ func (s *PromptTokensDetails) SetCachedTokens(val OptInt) {
 // SetAudioTokens sets the value of AudioTokens.
 func (s *PromptTokensDetails) SetAudioTokens(val OptInt) {
 	s.AudioTokens = val
+}
+
+// Ref: #/components/schemas/ResponseOutputContent
+type ResponseOutputContent struct {
+	Type ResponseOutputContentType `json:"type"`
+	Text string                    `json:"text"`
+}
+
+// GetType returns the value of Type.
+func (s *ResponseOutputContent) GetType() ResponseOutputContentType {
+	return s.Type
+}
+
+// GetText returns the value of Text.
+func (s *ResponseOutputContent) GetText() string {
+	return s.Text
+}
+
+// SetType sets the value of Type.
+func (s *ResponseOutputContent) SetType(val ResponseOutputContentType) {
+	s.Type = val
+}
+
+// SetText sets the value of Text.
+func (s *ResponseOutputContent) SetText(val string) {
+	s.Text = val
+}
+
+type ResponseOutputContentType string
+
+const (
+	ResponseOutputContentTypeOutputText ResponseOutputContentType = "output_text"
+)
+
+// AllValues returns all ResponseOutputContentType values.
+func (ResponseOutputContentType) AllValues() []ResponseOutputContentType {
+	return []ResponseOutputContentType{
+		ResponseOutputContentTypeOutputText,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s ResponseOutputContentType) MarshalText() ([]byte, error) {
+	switch s {
+	case ResponseOutputContentTypeOutputText:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *ResponseOutputContentType) UnmarshalText(data []byte) error {
+	switch ResponseOutputContentType(data) {
+	case ResponseOutputContentTypeOutputText:
+		*s = ResponseOutputContentTypeOutputText
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Ref: #/components/schemas/ResponseOutputItem
+type ResponseOutputItem struct {
+	Type      ResponseOutputItemType  `json:"type"`
+	ID        OptString               `json:"id"`
+	CallID    OptString               `json:"call_id"`
+	Name      OptString               `json:"name"`
+	Arguments OptString               `json:"arguments"`
+	Role      OptString               `json:"role"`
+	Content   []ResponseOutputContent `json:"content"`
+	Status    OptString               `json:"status"`
+}
+
+// GetType returns the value of Type.
+func (s *ResponseOutputItem) GetType() ResponseOutputItemType {
+	return s.Type
+}
+
+// GetID returns the value of ID.
+func (s *ResponseOutputItem) GetID() OptString {
+	return s.ID
+}
+
+// GetCallID returns the value of CallID.
+func (s *ResponseOutputItem) GetCallID() OptString {
+	return s.CallID
+}
+
+// GetName returns the value of Name.
+func (s *ResponseOutputItem) GetName() OptString {
+	return s.Name
+}
+
+// GetArguments returns the value of Arguments.
+func (s *ResponseOutputItem) GetArguments() OptString {
+	return s.Arguments
+}
+
+// GetRole returns the value of Role.
+func (s *ResponseOutputItem) GetRole() OptString {
+	return s.Role
+}
+
+// GetContent returns the value of Content.
+func (s *ResponseOutputItem) GetContent() []ResponseOutputContent {
+	return s.Content
+}
+
+// GetStatus returns the value of Status.
+func (s *ResponseOutputItem) GetStatus() OptString {
+	return s.Status
+}
+
+// SetType sets the value of Type.
+func (s *ResponseOutputItem) SetType(val ResponseOutputItemType) {
+	s.Type = val
+}
+
+// SetID sets the value of ID.
+func (s *ResponseOutputItem) SetID(val OptString) {
+	s.ID = val
+}
+
+// SetCallID sets the value of CallID.
+func (s *ResponseOutputItem) SetCallID(val OptString) {
+	s.CallID = val
+}
+
+// SetName sets the value of Name.
+func (s *ResponseOutputItem) SetName(val OptString) {
+	s.Name = val
+}
+
+// SetArguments sets the value of Arguments.
+func (s *ResponseOutputItem) SetArguments(val OptString) {
+	s.Arguments = val
+}
+
+// SetRole sets the value of Role.
+func (s *ResponseOutputItem) SetRole(val OptString) {
+	s.Role = val
+}
+
+// SetContent sets the value of Content.
+func (s *ResponseOutputItem) SetContent(val []ResponseOutputContent) {
+	s.Content = val
+}
+
+// SetStatus sets the value of Status.
+func (s *ResponseOutputItem) SetStatus(val OptString) {
+	s.Status = val
+}
+
+type ResponseOutputItemType string
+
+const (
+	ResponseOutputItemTypeMessage      ResponseOutputItemType = "message"
+	ResponseOutputItemTypeFunctionCall ResponseOutputItemType = "function_call"
+)
+
+// AllValues returns all ResponseOutputItemType values.
+func (ResponseOutputItemType) AllValues() []ResponseOutputItemType {
+	return []ResponseOutputItemType{
+		ResponseOutputItemTypeMessage,
+		ResponseOutputItemTypeFunctionCall,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s ResponseOutputItemType) MarshalText() ([]byte, error) {
+	switch s {
+	case ResponseOutputItemTypeMessage:
+		return []byte(s), nil
+	case ResponseOutputItemTypeFunctionCall:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *ResponseOutputItemType) UnmarshalText(data []byte) error {
+	switch ResponseOutputItemType(data) {
+	case ResponseOutputItemTypeMessage:
+		*s = ResponseOutputItemTypeMessage
+		return nil
+	case ResponseOutputItemTypeFunctionCall:
+		*s = ResponseOutputItemTypeFunctionCall
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Ref: #/components/schemas/ResponseTextConfig
+type ResponseTextConfig struct {
+	Format OptResponseTextFormat `json:"format"`
+}
+
+// GetFormat returns the value of Format.
+func (s *ResponseTextConfig) GetFormat() OptResponseTextFormat {
+	return s.Format
+}
+
+// SetFormat sets the value of Format.
+func (s *ResponseTextConfig) SetFormat(val OptResponseTextFormat) {
+	s.Format = val
+}
+
+// Ref: #/components/schemas/ResponseTextFormat
+type ResponseTextFormat struct {
+	Type   ResponseTextFormatType `json:"type"`
+	Name   OptString              `json:"name"`
+	Schema jx.Raw                 `json:"schema"`
+}
+
+// GetType returns the value of Type.
+func (s *ResponseTextFormat) GetType() ResponseTextFormatType {
+	return s.Type
+}
+
+// GetName returns the value of Name.
+func (s *ResponseTextFormat) GetName() OptString {
+	return s.Name
+}
+
+// GetSchema returns the value of Schema.
+func (s *ResponseTextFormat) GetSchema() jx.Raw {
+	return s.Schema
+}
+
+// SetType sets the value of Type.
+func (s *ResponseTextFormat) SetType(val ResponseTextFormatType) {
+	s.Type = val
+}
+
+// SetName sets the value of Name.
+func (s *ResponseTextFormat) SetName(val OptString) {
+	s.Name = val
+}
+
+// SetSchema sets the value of Schema.
+func (s *ResponseTextFormat) SetSchema(val jx.Raw) {
+	s.Schema = val
+}
+
+type ResponseTextFormatType string
+
+const (
+	ResponseTextFormatTypeText       ResponseTextFormatType = "text"
+	ResponseTextFormatTypeJSONSchema ResponseTextFormatType = "json_schema"
+	ResponseTextFormatTypeJSONObject ResponseTextFormatType = "json_object"
+)
+
+// AllValues returns all ResponseTextFormatType values.
+func (ResponseTextFormatType) AllValues() []ResponseTextFormatType {
+	return []ResponseTextFormatType{
+		ResponseTextFormatTypeText,
+		ResponseTextFormatTypeJSONSchema,
+		ResponseTextFormatTypeJSONObject,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s ResponseTextFormatType) MarshalText() ([]byte, error) {
+	switch s {
+	case ResponseTextFormatTypeText:
+		return []byte(s), nil
+	case ResponseTextFormatTypeJSONSchema:
+		return []byte(s), nil
+	case ResponseTextFormatTypeJSONObject:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *ResponseTextFormatType) UnmarshalText(data []byte) error {
+	switch ResponseTextFormatType(data) {
+	case ResponseTextFormatTypeText:
+		*s = ResponseTextFormatTypeText
+		return nil
+	case ResponseTextFormatTypeJSONSchema:
+		*s = ResponseTextFormatTypeJSONSchema
+		return nil
+	case ResponseTextFormatTypeJSONObject:
+		*s = ResponseTextFormatTypeJSONObject
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Ref: #/components/schemas/ResponseTool
+type ResponseTool struct {
+	Type        ResponseToolType `json:"type"`
+	Name        string           `json:"name"`
+	Description OptString        `json:"description"`
+	Parameters  jx.Raw           `json:"parameters"`
+}
+
+// GetType returns the value of Type.
+func (s *ResponseTool) GetType() ResponseToolType {
+	return s.Type
+}
+
+// GetName returns the value of Name.
+func (s *ResponseTool) GetName() string {
+	return s.Name
+}
+
+// GetDescription returns the value of Description.
+func (s *ResponseTool) GetDescription() OptString {
+	return s.Description
+}
+
+// GetParameters returns the value of Parameters.
+func (s *ResponseTool) GetParameters() jx.Raw {
+	return s.Parameters
+}
+
+// SetType sets the value of Type.
+func (s *ResponseTool) SetType(val ResponseToolType) {
+	s.Type = val
+}
+
+// SetName sets the value of Name.
+func (s *ResponseTool) SetName(val string) {
+	s.Name = val
+}
+
+// SetDescription sets the value of Description.
+func (s *ResponseTool) SetDescription(val OptString) {
+	s.Description = val
+}
+
+// SetParameters sets the value of Parameters.
+func (s *ResponseTool) SetParameters(val jx.Raw) {
+	s.Parameters = val
+}
+
+type ResponseToolType string
+
+const (
+	ResponseToolTypeFunction ResponseToolType = "function"
+)
+
+// AllValues returns all ResponseToolType values.
+func (ResponseToolType) AllValues() []ResponseToolType {
+	return []ResponseToolType{
+		ResponseToolTypeFunction,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s ResponseToolType) MarshalText() ([]byte, error) {
+	switch s {
+	case ResponseToolTypeFunction:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *ResponseToolType) UnmarshalText(data []byte) error {
+	switch ResponseToolType(data) {
+	case ResponseToolTypeFunction:
+		*s = ResponseToolTypeFunction
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Ref: #/components/schemas/ResponseUsage
+type ResponseUsage struct {
+	InputTokens  int `json:"input_tokens"`
+	OutputTokens int `json:"output_tokens"`
+	TotalTokens  int `json:"total_tokens"`
+}
+
+// GetInputTokens returns the value of InputTokens.
+func (s *ResponseUsage) GetInputTokens() int {
+	return s.InputTokens
+}
+
+// GetOutputTokens returns the value of OutputTokens.
+func (s *ResponseUsage) GetOutputTokens() int {
+	return s.OutputTokens
+}
+
+// GetTotalTokens returns the value of TotalTokens.
+func (s *ResponseUsage) GetTotalTokens() int {
+	return s.TotalTokens
+}
+
+// SetInputTokens sets the value of InputTokens.
+func (s *ResponseUsage) SetInputTokens(val int) {
+	s.InputTokens = val
+}
+
+// SetOutputTokens sets the value of OutputTokens.
+func (s *ResponseUsage) SetOutputTokens(val int) {
+	s.OutputTokens = val
+}
+
+// SetTotalTokens sets the value of TotalTokens.
+func (s *ResponseUsage) SetTotalTokens(val int) {
+	s.TotalTokens = val
 }
