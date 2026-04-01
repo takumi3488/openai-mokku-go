@@ -69,3 +69,11 @@ func (s *CreateCompletionRequest) setDefaults() {
 		s.BestOf.SetTo(val)
 	}
 }
+
+// setDefaults set default value of fields.
+func (s *CreateEmbeddingRequest) setDefaults() {
+	{
+		val := CreateEmbeddingRequestEncodingFormat("float")
+		s.EncodingFormat.SetTo(val)
+	}
+}

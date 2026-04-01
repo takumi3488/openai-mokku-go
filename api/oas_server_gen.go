@@ -20,6 +20,18 @@ type Handler interface {
 	//
 	// POST /completions
 	CreateCompletion(ctx context.Context, req *CreateCompletionRequest) (*CreateCompletionResponse, error)
+	// CreateEmbedding implements createEmbedding operation.
+	//
+	// Creates an embedding vector representing the input text.
+	//
+	// POST /embeddings
+	CreateEmbedding(ctx context.Context, req *CreateEmbeddingRequest) (*CreateEmbeddingResponse, error)
+	// CreateResponse implements createResponse operation.
+	//
+	// Creates a model response using the Responses API.
+	//
+	// POST /responses
+	CreateResponse(ctx context.Context, req *CreateResponseRequest) (*CreateResponseResponse, error)
 	// ListModels implements listModels operation.
 	//
 	// Lists the currently available models.

@@ -8,6 +8,8 @@ type OperationName = string
 const (
 	CreateChatCompletionOperation OperationName = "CreateChatCompletion"
 	CreateCompletionOperation     OperationName = "CreateCompletion"
+	CreateEmbeddingOperation      OperationName = "CreateEmbedding"
+	CreateResponseOperation       OperationName = "CreateResponse"
 	ListModelsOperation           OperationName = "ListModels"
 	RetrieveModelOperation        OperationName = "RetrieveModel"
 )

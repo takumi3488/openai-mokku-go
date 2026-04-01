@@ -16,7 +16,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/metric"
-	semconv "go.opentelemetry.io/otel/semconv/v1.37.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.39.0"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -39,6 +39,18 @@ type Invoker interface {
 	//
 	// POST /completions
 	CreateCompletion(ctx context.Context, request *CreateCompletionRequest) (*CreateCompletionResponse, error)
+	// CreateEmbedding invokes createEmbedding operation.
+	//
+	// Creates an embedding vector representing the input text.
+	//
+	// POST /embeddings
+	CreateEmbedding(ctx context.Context, request *CreateEmbeddingRequest) (*CreateEmbeddingResponse, error)
+	// CreateResponse invokes createResponse operation.
+	//
+	// Creates a model response using the Responses API.
+	//
+	// POST /responses
+	CreateResponse(ctx context.Context, request *CreateResponseRequest) (*CreateResponseResponse, error)
 	// ListModels invokes listModels operation.
 	//
 	// Lists the currently available models.
@@ -58,10 +70,6 @@ type Client struct {
 	serverURL *url.URL
 	baseClient
 }
-
-var _ Handler = struct {
-	*Client
-}{}
 
 // NewClient initializes new Client defined by OAS.
 func NewClient(serverURL string, opts ...ClientOption) (*Client, error) {
@@ -161,7 +169,8 @@ func (c *Client) sendCreateChatCompletion(ctx context.Context, request *CreateCh
 	if err != nil {
 		return res, errors.Wrap(err, "do request")
 	}
-	defer resp.Body.Close()
+	body := resp.Body
+	defer body.Close()
 
 	stage = "DecodeResponse"
 	result, err := decodeCreateChatCompletionResponse(resp)
@@ -237,10 +246,165 @@ func (c *Client) sendCreateCompletion(ctx context.Context, request *CreateComple
 	if err != nil {
 		return res, errors.Wrap(err, "do request")
 	}
-	defer resp.Body.Close()
+	body := resp.Body
+	defer body.Close()
 
 	stage = "DecodeResponse"
 	result, err := decodeCreateCompletionResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// CreateEmbedding invokes createEmbedding operation.
+//
+// Creates an embedding vector representing the input text.
+//
+// POST /embeddings
+func (c *Client) CreateEmbedding(ctx context.Context, request *CreateEmbeddingRequest) (*CreateEmbeddingResponse, error) {
+	res, err := c.sendCreateEmbedding(ctx, request)
+	return res, err
+}
+
+func (c *Client) sendCreateEmbedding(ctx context.Context, request *CreateEmbeddingRequest) (res *CreateEmbeddingResponse, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("createEmbedding"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.URLTemplateKey.String("/embeddings"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, CreateEmbeddingOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/embeddings"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "POST", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodeCreateEmbeddingRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeCreateEmbeddingResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// CreateResponse invokes createResponse operation.
+//
+// Creates a model response using the Responses API.
+//
+// POST /responses
+func (c *Client) CreateResponse(ctx context.Context, request *CreateResponseRequest) (*CreateResponseResponse, error) {
+	res, err := c.sendCreateResponse(ctx, request)
+	return res, err
+}
+
+func (c *Client) sendCreateResponse(ctx context.Context, request *CreateResponseRequest) (res *CreateResponseResponse, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("createResponse"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.URLTemplateKey.String("/responses"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, CreateResponseOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/responses"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "POST", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodeCreateResponseRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeCreateResponseResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}
@@ -310,7 +474,8 @@ func (c *Client) sendListModels(ctx context.Context) (res *ListModelsResponse, e
 	if err != nil {
 		return res, errors.Wrap(err, "do request")
 	}
-	defer resp.Body.Close()
+	body := resp.Body
+	defer body.Close()
 
 	stage = "DecodeResponse"
 	result, err := decodeListModelsResponse(resp)
@@ -401,7 +566,8 @@ func (c *Client) sendRetrieveModel(ctx context.Context, params RetrieveModelPara
 	if err != nil {
 		return res, errors.Wrap(err, "do request")
 	}
-	defer resp.Body.Close()
+	body := resp.Body
+	defer body.Close()
 
 	stage = "DecodeResponse"
 	result, err := decodeRetrieveModelResponse(resp)
