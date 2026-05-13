@@ -12,7 +12,7 @@ services:
         condition: service_healthy
 
   jaeger:
-    image: jaegertracing/jaeger:latest@sha256:6266573208d665ce5c17483bce0a75d0806480d92c84766d288d0aee885ce708
+    image: jaegertracing/jaeger:latest@sha256:d2cbd047e44b50c11454820f84fd5f34c24a435e5301cf94fe026bf055db80b3
     ports:
       - "16686:16686" # Jaeger UI
       - "4317:4317"   # OTLP gRPC
