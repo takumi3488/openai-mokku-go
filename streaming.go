@@ -96,6 +96,14 @@ func NewStreamingHandler(ogenServer http.Handler) *StreamingHandler {
 
 // ServeHTTP implements http.Handler
 func (h *StreamingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// Handle health check endpoint
+	if r.Method == http.MethodGet && r.URL.Path == "/healthz" {
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("ok"))
+		return
+	}
+
 	// Intercept POST /v1/chat/completions
 	if r.Method == http.MethodPost && r.URL.Path == "/v1/chat/completions" {
 		body, handled := readBodyAndCheckCreditError(w, r)
