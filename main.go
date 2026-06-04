@@ -21,6 +21,13 @@ import (
 )
 
 func main() {
+	// Run as a health check probe when invoked with -healthcheck.
+	// Used by the container healthcheck since the distroless image
+	// has no shell, wget, or curl.
+	if len(os.Args) > 1 && os.Args[1] == "-healthcheck" {
+		os.Exit(runHealthCheck())
+	}
+
 	ctx := context.Background()
 
 	// Initialize OpenTelemetry Tracer Provider
@@ -84,6 +91,21 @@ func main() {
 	}
 
 	log.Println("Server exited")
+}
+
+// runHealthCheck probes the /healthz endpoint and returns the process exit code.
+func runHealthCheck() int {
+	client := &http.Client{Timeout: 5 * time.Second}
+	resp, err := client.Get("http://localhost:8080/healthz")
+	if err != nil {
+		return 1
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode != http.StatusOK {
+		return 1
+	}
+	return 0
 }
 
 func initTracerProvider(ctx context.Context) (*sdktrace.TracerProvider, error) {

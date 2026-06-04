@@ -10,6 +10,12 @@ services:
     depends_on:
       jaeger:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "/main", "-healthcheck"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
 
   jaeger:
     image: jaegertracing/jaeger:latest@sha256:ede4864215be4cd85bd8c3129a2fea6c5713c5653c7282c429dba123014bc68b
