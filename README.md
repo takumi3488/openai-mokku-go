@@ -146,6 +146,11 @@ openai-mokku/
 2. Streaming chat completion requests (`stream: true`) are handled directly in `streaming.go`
 3. All other requests are passed through to the ogen-generated server
 
+## Support
+
+If you find openai-mokku-go useful, consider [sponsoring takumi3488](https://github.com/sponsors/takumi3488)
+to support its development and maintenance.
+
 ## License
 
 MIT
